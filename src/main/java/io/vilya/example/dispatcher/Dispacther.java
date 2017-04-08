@@ -1,5 +1,8 @@
 package io.vilya.example.dispatcher;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,12 +22,12 @@ public class Dispacther {
 	
 	private int poolSize = 5;
 	
-	private ConcurrentHashMap<String, IListener> listeners;
+	private ConcurrentHashMap<String, List<IListener>> listenerMap;
 	
 	private ExecutorService executors;
 	
 	{
-		listeners = new ConcurrentHashMap<>();
+		listenerMap = new ConcurrentHashMap<>();
 		executors = Executors.newFixedThreadPool(poolSize);
 	}
 	
@@ -34,11 +37,17 @@ public class Dispacther {
 		Assert.notNull(key, "Argument[key] can not be null.");
 		Assert.notNull(listener, "Argument[listener] can not be null.");
 		
-		if (listeners.contains(key)) {
-			throw new DispatchException("Key exist.");
+		List<IListener> listeners;
+		if (listenerMap.containsKey(key)) {
+			listeners = listenerMap.get(key);
+			listeners.add(listener);
+		} else {
+			listeners = new LinkedList<>();
+			listeners.add(listener);
+			
+			listenerMap.put(key, listeners);
+
 		}
-		
-		listeners.put(key, listener);
 	}
 	
 	public void dispatch(Message message) {
@@ -47,22 +56,17 @@ public class Dispacther {
 		String key = message.getKey();
 		Object data = message.getData();
 		
-		IListener listener = listeners.get(key);
-		if (listener == null) {
+		List<IListener> listeners = listenerMap.get(key);
+		if (listeners == null) {
 			LOGGER.info("No listener corresponding to the key: {}", key);
+			return;
 		}
 		
-		/*
-		try {
-			listener.handle(data);			
-		} catch (Exception e) {
-			LOGGER.error("error in listener: ", e);
+		Runnable task;
+		for (IListener listener : listeners) {
+			task = new ListenerThread(listener, data);
+			executors.submit(task);
 		}
-		*/
-		
-		// new Thread(new ListenerThread(listener, data)).start();
-		
-		executors.submit(new ListenerThread(listener, data));
 	}
 	
 	private class ListenerThread implements Runnable{

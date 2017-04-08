@@ -42,6 +42,10 @@ public class TestDispatcher {
 		
 		
 		System.out.println(111);
+		
+		for (int i = 0; i < 10; i++) {
+			dispacther.dispatch(alarmMessage);
+		}
 	}
 	
 	
