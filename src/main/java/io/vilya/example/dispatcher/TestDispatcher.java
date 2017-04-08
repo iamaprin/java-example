@@ -46,6 +46,9 @@ public class TestDispatcher {
 		for (int i = 0; i < 10; i++) {
 			dispacther.dispatch(alarmMessage);
 		}
+		
+		
+		dispacther.shutdown();
 	}
 	
 	

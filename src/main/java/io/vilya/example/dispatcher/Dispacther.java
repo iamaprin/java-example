@@ -46,7 +46,6 @@ public class Dispacther {
 			listeners.add(listener);
 			
 			listenerMap.put(key, listeners);
-
 		}
 	}
 	
@@ -67,6 +66,10 @@ public class Dispacther {
 			task = new ListenerThread(listener, data);
 			executors.submit(task);
 		}
+	}
+	
+	public void shutdown() {
+		executors.shutdown();
 	}
 	
 	private class ListenerThread implements Runnable{
